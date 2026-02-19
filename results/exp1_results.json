@@ -1,0 +1,27 @@
+{
+  "a1_baseline": {
+    "model": "LR + FastText (A1)",
+    "test_f1": 0.6395,
+    "params": "N/A (sklearn)",
+    "train_time": "N/A",
+    "inference_speed": "N/A",
+    "gpu_memory_mb": 0
+  },
+  "bilstm": {
+    "model": "BiLSTM (FastText)",
+    "test_f1": 0.6068,
+    "params": 2720770,
+    "train_time": 57.9,
+    "inference_speed": 9459.9,
+    "gpu_memory_mb": 178.3
+  },
+  "bert": {
+    "model": "BERT (gradual unfreeze)",
+    "test_f1": 0.6294,
+    "params": 109483778,
+    "total_params": 109483778,
+    "train_time": 144.8,
+    "inference_speed": 1117.0,
+    "gpu_memory_mb": 2995.8
+  }
+}

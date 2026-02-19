@@ -1,0 +1,91 @@
+{
+  "baseline_errors": 371,
+  "fixed_by_lstm": 117,
+  "fixed_by_bert": 110,
+  "new_errors_lstm": 135,
+  "new_errors_bert": 102,
+  "fixed_examples": [
+    {
+      "file": "15916.jpg",
+      "text": "Your computer has 20 viruses The are 40 hot milfs in your area",
+      "true": 0,
+      "baseline": 1,
+      "lstm": 0,
+      "bert": 0
+    },
+    {
+      "file": "16323.jpg",
+      "text": "TOM HIDDLESTON nd make Nm a sommich Tom Hiddleston images Sammich HD wallpaper and background photos...",
+      "true": 0,
+      "baseline": 1,
+      "lstm": 0,
+      "bert": 0
+    },
+    {
+      "file": "15676.jpg",
+      "text": "The fourth little pig's house was made of wolf skulls. They aren't very sturdy, but they send a message.",
+      "true": 0,
+      "baseline": 1,
+      "lstm": 0,
+      "bert": 0
+    },
+    {
+      "file": "15027.jpg",
+      "text": "I want a Daughter One day 30",
+      "true": 0,
+      "baseline": 1,
+      "lstm": 0,
+      "bert": 0
+    },
+    {
+      "file": "15542.jpg",
+      "text": "Me when I start talking to a cute girl Me when I start catching feelings for her uh oh",
+      "true": 0,
+      "baseline": 1,
+      "lstm": 0,
+      "bert": 0
+    }
+  ],
+  "new_error_examples": [
+    {
+      "file": "15742.jpg",
+      "text": "I DONT ALWAYS STEAL YOUR WIFE RIE BUT WHEN I DO, I MAKE HER MY SEX SLAVE makoorems.ca",
+      "true": 1,
+      "baseline": 1,
+      "lstm": 0,
+      "bert": 0
+    },
+    {
+      "file": "15502.jpg",
+      "text": "JUST BOUGHT A NEW GUITAR THEN SHE SAID: ARE YOU GOING TO SELL THE OLD ONE? hengenerator.net",
+      "true": 0,
+      "baseline": 0,
+      "lstm": 1,
+      "bert": 1
+    },
+    {
+      "file": "15037.jpg",
+      "text": "imgflip.com EVERY SUPER-HERO HAS A VULNERABILITY THEY JUST CAN'T OVERCOME THEIRS IS GRAVITY+TIME EUROBEAT KASCHI",
+      "true": 1,
+      "baseline": 1,
+      "lstm": 0,
+      "bert": 0
+    },
+    {
+      "file": "15301.jpg",
+      "text": "WAIT A MINUTE Salada WHAT DID YOU MEAN? WOMAN COOKING BETTER THAN MAN? quickmeme.com wait a minute what did you mean? wo",
+      "true": 0,
+      "baseline": 0,
+      "lstm": 1,
+      "bert": 1
+    },
+    {
+      "file": "15521.jpg",
+      "text": "YOU GET A GIRLFRIEND SHE BECOMES A GAMER SHE GETS BETTER THAN YOU AT ALL GAMES SHE CHALLENGES YOU TO A GAME",
+      "true": 0,
+      "baseline": 0,
+      "lstm": 1,
+      "bert": 1
+    }
+  ]
+}

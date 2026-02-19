@@ -1,0 +1,71 @@
+{
+  "lstm_ablations": [
+    {
+      "name": "Uni-LSTM (1L, 128h)",
+      "test_f1": 0.6063,
+      "params": 220418,
+      "train_time": 20.4
+    },
+    {
+      "name": "Uni-LSTM (2L, 256h)",
+      "test_f1": 0.6233,
+      "params": 1098242,
+      "train_time": 44.8
+    },
+    {
+      "name": "Bi-LSTM (1L, 128h)",
+      "test_f1": 0.6247,
+      "params": 440834,
+      "train_time": 42.6
+    },
+    {
+      "name": "Bi-LSTM (1L, 256h)",
+      "test_f1": 0.6141,
+      "params": 1143810,
+      "train_time": 24.7
+    },
+    {
+      "name": "Bi-LSTM (2L, 256h)",
+      "test_f1": 0.6068,
+      "params": 2720770,
+      "train_time": 57.3
+    }
+  ],
+  "bert_ablations": [
+    {
+      "name": "BERT frozen",
+      "test_f1": 0.6054,
+      "trainable_params": 1538,
+      "total_params": 109483778,
+      "train_time": 83.8
+    },
+    {
+      "name": "BERT last-2 unfrozen",
+      "test_f1": 0.6303,
+      "trainable_params": 14177282,
+      "total_params": 109483778,
+      "train_time": 97.8
+    },
+    {
+      "name": "BERT full fine-tune",
+      "test_f1": 0.6408,
+      "trainable_params": 109483778,
+      "total_params": 109483778,
+      "train_time": 190.0
+    },
+    {
+      "name": "BERT gradual unfreeze",
+      "test_f1": 0.6155,
+      "trainable_params": 109483778,
+      "total_params": 109483778,
+      "train_time": 144.3
+    },
+    {
+      "name": "DistilBERT gradual",
+      "test_f1": 0.6397,
+      "trainable_params": 66364418,
+      "total_params": 66364418,
+      "train_time": 92.2
+    }
+  ]
+}
