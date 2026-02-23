@@ -22,6 +22,12 @@ This report analyzes the performance of neural sequence models for misogyny dete
   - Epoch 3+: Unfreeze all layers.
 - **Regularization**: Dropout (0.4) in the classification head, Label Smoothing (0.1).
 
+### 2.3 Addressing Overfitting
+A major challenge in this task was the small dataset size (10,000 training samples) relative to the capacity of the models, particularly BERT (110M parameters). Initial experiments showed severe overfitting, with training F1 scores reaching ~0.99 while validation F1 plateaued at ~0.60. To mitigate this, we implemented:
+- **Aggressive Regularization**: Increased dropout rates (0.5 for LSTM, 0.4 for BERT) and added weight decay.
+- **Variational Dropout**: For LSTM, applying the same dropout mask across time steps (`LockedDropout`) prevented the model from memorizing specific patterns.
+- **Gradual Unfreezing**: For BERT, progressively unfreezing layers prevented catastrophic forgetting and allowed the model to adapt to the task without destroying pre-trained knowledge.
+
 ## 3. Experimental Results
 
 ### 3.1 Architecture Comparison (Experiment 1)

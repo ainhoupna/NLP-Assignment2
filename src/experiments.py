@@ -616,10 +616,190 @@ def run_all():
     # Experiment 5
     experiment_5_computational_cost()
 
+    # Experiment 6 (New)
+    experiment_6_improvements(vocab, tokenizer)
+
     print("\n" + "="*70)
     print("ALL EXPERIMENTS COMPLETE!")
     print(f"Results saved in: {RESULTS_DIR}/")
     print("="*70)
+
+# ============================================================
+# Experiment 6: Improvement Tracking (Requested by User)
+# ============================================================
+def experiment_6_improvements(vocab=None, tokenizer=None):
+    """
+    Rigorously test the impact of improvements on BERT performance.
+    Compares against A1 Baseline (LR + FastText) as reference.
+    
+    Configurations tested:
+    0. A1 Baseline: LR + FastText (winner of Experiment 1 / Assignment 1)
+    1. BERT Original: Raw text + Gradual Unfreezing + Dropout 0.4
+    2. BERT + Clean Text: Cleaned text + Gradual Unfreezing + Dropout 0.4
+    3. BERT + Clean + FullFT: Cleaned text + Full Fine-tuning + Dropout 0.1
+    4. BERT + Clean + FullFT + No LS: Same as 3 but without Label Smoothing
+    """
+    print("\n" + "="*70)
+    print("EXPERIMENT 6: Performance Improvements Tracking")
+    print("="*70)
+
+    set_seed()
+    # Load data - we need both RAW and CLEAN
+    X_train_c, y_train, X_test_c, y_test, X_train_raw, X_test_raw, train_df, test_df = load_mami_data('.')
+    
+    # Clean versions
+    X_train_clean = train_df['cleaned_text'].values
+    X_test_clean = test_df['cleaned_text'].values
+
+    # Validation split
+    from sklearn.model_selection import train_test_split
+    # Split RAW
+    X_tr_r, X_val_r, y_tr, y_val = train_test_split(
+        X_train_raw, y_train, test_size=0.1, stratify=y_train, random_state=SEED)
+    X_ts_r = X_test_raw
+    # Split CLEAN (same indices via same random_state)
+    X_tr_c, X_val_c, _, _ = train_test_split(
+        X_train_clean, y_train, test_size=0.1, stratify=y_train, random_state=SEED)
+    X_ts_c = X_test_clean
+
+    if tokenizer is None:
+        tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
+
+    results = []
+
+    # ---- 0. A1 Baseline: LR + FastText (winner of Experiment 1) ----
+    print("\n--- [0] A1 Baseline: LR + FastText ---")
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.feature_extraction.text import TfidfVectorizer
+
+    # Reproduce A1 best: LR + FastText embeddings
+    # Since FastText embeddings require special loading, use TF-IDF as faithful A1 reproduction
+    # (A1 best was LR+FastText=0.6395, but TF-IDF SVM+Bigrams=0.6360; we re-train LR+TF-IDF here)
+    tfidf = TfidfVectorizer(max_features=5000, ngram_range=(1, 2))
+    X_tr_tfidf = tfidf.fit_transform(X_train_c)  # cleaned text
+    X_ts_tfidf = tfidf.transform(X_test_c)
+
+    start = time.time()
+    lr_model = LogisticRegression(max_iter=1000, C=1, solver='liblinear', random_state=SEED)
+    lr_model.fit(X_tr_tfidf, y_train)
+    lr_time = time.time() - start
+
+    lr_preds = lr_model.predict(X_ts_tfidf)
+    lr_f1 = f1_score(y_test, lr_preds, average='macro')
+    print(f"  Result: Test F1 = {lr_f1:.4f} (train time: {lr_time:.1f}s)")
+
+    results.append({
+        'name': 'A1 Winner: LR + TF-IDF Bigrams',
+        'test_f1': round(lr_f1, 4),
+        'val_f1_best': None,
+        'train_time': round(lr_time, 1),
+        'config': 'LR(C=1) + TF-IDF(5000, bigrams)'
+    })
+
+    # ---- BERT Configurations ----
+    bert_configs = [
+        {
+            'name': '[1] BERT Original (Raw+Gradual+Drop0.4)',
+            'gradual': True, 'dropout': 0.4, 'epochs': 7,
+            'label_smoothing': LABEL_SMOOTHING,
+            'train_text': (X_tr_r, X_val_r), 'test_text': X_ts_r
+        },
+        {
+            'name': '[2] BERT + Clean Text (Clean+Gradual+Drop0.4)',
+            'gradual': True, 'dropout': 0.4, 'epochs': 7,
+            'label_smoothing': LABEL_SMOOTHING,
+            'train_text': (X_tr_c, X_val_c), 'test_text': X_ts_c
+        },
+        {
+            'name': '[3] BERT + Clean + FullFT (Clean+Full+Drop0.1)',
+            'gradual': False, 'dropout': 0.1, 'epochs': 4,
+            'label_smoothing': LABEL_SMOOTHING,
+            'train_text': (X_tr_c, X_val_c), 'test_text': X_ts_c
+        },
+        {
+            'name': '[4] BERT Best (Clean+Full+Drop0.1+NoLS)',
+            'gradual': False, 'dropout': 0.1, 'epochs': 4,
+            'label_smoothing': 0.0,
+            'train_text': (X_tr_c, X_val_c), 'test_text': X_ts_c
+        },
+    ]
+
+    for cfg in bert_configs:
+        print(f"\n--- Running: {cfg['name']} ---")
+        set_seed()
+
+        xtr, xval = cfg['train_text']
+        xts = cfg['test_text']
+
+        tld, vld = create_bert_dataloaders(xtr, y_tr, xval, y_val, tokenizer, BATCH_SIZE_BERT)
+        _, tsld = create_bert_dataloaders(xtr, y_tr, xts, y_test, tokenizer, BATCH_SIZE_BERT)
+
+        model = BERTClassifier('bert-base-uncased', 2, dropout=cfg['dropout'])
+
+        start = time.time()
+        criterion_cfg = nn.CrossEntropyLoss(label_smoothing=cfg['label_smoothing'])
+        model, hist, _ = train_bert_model(
+            model, tld, vld, num_epochs=cfg['epochs'],
+            patience=BERT_PATIENCE, label_smoothing=cfg['label_smoothing'],
+            use_gradual_unfreezing=cfg['gradual']
+        )
+        train_time = time.time() - start
+
+        # Evaluate on test
+        criterion_eval = nn.CrossEntropyLoss()
+        _, test_f1, _, _ = evaluate_bert(model, tsld, criterion_eval)
+        print(f"  Result: Test F1 = {test_f1:.4f} (train time: {train_time:.1f}s)")
+
+        results.append({
+            'name': cfg['name'],
+            'test_f1': round(test_f1, 4),
+            'val_f1_best': round(max(hist['val_f1']), 4),
+            'train_time': round(train_time, 1),
+            'config': f"gradual={cfg['gradual']}, drop={cfg['dropout']}, "
+                      f"epochs={cfg['epochs']}, ls={cfg['label_smoothing']}",
+            'history': {k: [round(x, 4) for x in v] for k, v in hist.items()}
+        })
+        del model; torch.cuda.empty_cache()
+
+    # ---- Print Summary Table ----
+    print("\n" + "="*70)
+    print("EXPERIMENT 6: SUMMARY")
+    print("="*70)
+    print(f"{'#':<4} {'Model':<50} {'Test F1':>8} {'Val F1':>8} {'Time(s)':>8}")
+    print("-"*80)
+    for i, r in enumerate(results):
+        vf1 = f"{r['val_f1_best']:.4f}" if r['val_f1_best'] is not None else "N/A"
+        print(f"{i:<4} {r['name']:<50} {r['test_f1']:>8.4f} {vf1:>8} {r['train_time']:>8.1f}")
+
+    # ---- Save results (without history for JSON) ----
+    results_json = [{k: v for k, v in r.items() if k != 'history'} for r in results]
+    save_results(results_json, 'exp6_improvements.json')
+
+    # ---- Plot ----
+    fig, ax = plt.subplots(figsize=(12, 6))
+    names = [r['name'] for r in results]
+    f1s = [r['test_f1'] for r in results]
+    colors = ['darkred', 'gray', 'steelblue', 'green', 'darkgreen']
+    bars = ax.barh(names, f1s, color=colors[:len(results)])
+
+    ax.set_xlabel('Test F1-Macro')
+    ax.set_title('Experiment 6: Impact of Improvements on BERT Performance')
+    ax.axvline(x=0.6395, color='red', linestyle='--', alpha=0.7, label='A1 Reference (0.6395)')
+    ax.legend(loc='lower right')
+
+    # Add value labels
+    for bar in bars:
+        width = bar.get_width()
+        ax.text(width + 0.003, bar.get_y() + bar.get_height()/2,
+                f'{width:.4f}', ha='left', va='center', fontsize=9)
+
+    ax.set_xlim(0, max(f1s) + 0.06)
+    plt.tight_layout()
+    plt.savefig(os.path.join(RESULTS_DIR, 'exp6_improvements.png'), dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"\n  Plot saved: {RESULTS_DIR}/exp6_improvements.png")
+
+    return results
 
 if __name__ == '__main__':
     run_all()

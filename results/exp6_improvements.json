@@ -1,0 +1,37 @@
+[
+  {
+    "name": "A1 Winner: LR + TF-IDF Bigrams",
+    "test_f1": 0.6347,
+    "val_f1_best": null,
+    "train_time": 0.0,
+    "config": "LR(C=1) + TF-IDF(5000, bigrams)"
+  },
+  {
+    "name": "[1] BERT Original (Raw+Gradual+Drop0.4)",
+    "test_f1": 0.6155,
+    "val_f1_best": 0.821,
+    "train_time": 142.9,
+    "config": "gradual=True, drop=0.4, epochs=7, ls=0.1"
+  },
+  {
+    "name": "[2] BERT + Clean Text (Clean+Gradual+Drop0.4)",
+    "test_f1": 0.6654,
+    "val_f1_best": 0.809,
+    "train_time": 141.4,
+    "config": "gradual=True, drop=0.4, epochs=7, ls=0.1"
+  },
+  {
+    "name": "[3] BERT + Clean + FullFT (Clean+Full+Drop0.1)",
+    "test_f1": 0.6383,
+    "val_f1_best": 0.82,
+    "train_time": 106.9,
+    "config": "gradual=False, drop=0.1, epochs=4, ls=0.1"
+  },
+  {
+    "name": "[4] BERT Best (Clean+Full+Drop0.1+NoLS)",
+    "test_f1": 0.6415,
+    "val_f1_best": 0.818,
+    "train_time": 106.9,
+    "config": "gradual=False, drop=0.1, epochs=4, ls=0.0"
+  }
+]
