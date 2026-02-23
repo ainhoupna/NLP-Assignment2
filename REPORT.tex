@@ -61,26 +61,37 @@ To mitigate this, we progressively increased regularization:
     \item \textbf{Label Smoothing (0.1)}: Softened the target distribution to discourage overconfident predictions.
 \end{itemize}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{results/exp1_training_curves.png}
+    \caption{Training and validation curves for BiLSTM and BERT. The regularization successfully prevents the massive overfitting seen in early stages.}
+    \label{fig:curves}
+\end{figure}
+
 After applying these techniques, the training-validation gap was successfully reduced (Training F1 $\sim$0.74, Validation F1 $\sim$0.75), but the test performance remained below our expectations.
 
 \section{Experimental Results}
 
 \subsection{Architecture Comparison (Experiment 1)}
+We compare the two neural models against the \textbf{winner of Assignment 1}: Logistic Regression with FastText embeddings (300d, averaged), which achieved 0.6395 F1-Macro on the official test set.
+
 \begin{table}[H]
     \centering
-    \begin{tabular}{lcccc}
+    \begin{tabular}{lccccc}
         \toprule
-        \textbf{Model} & \textbf{Test F1} & \textbf{Val F1} & \textbf{Params} & \textbf{Time (s)} \\
+        \textbf{Model} & \textbf{Representation} & \textbf{Test F1} & \textbf{Val F1} & \textbf{Params} & \textbf{Time} \\
         \midrule
-        A1 Baseline (LR) & \textbf{0.6395} & N/A & N/A & $<$ 1s \\
-        BiLSTM & 0.6068 & 0.7476 & 2.7M & 58s \\
-        BERT (Gradual) & 0.6294 & 0.8289 & 110M & 145s \\
+        A1 Winner: LR + FastText & Dense (300d) & \textbf{0.6395} & 0.7252 (CV) & 301 & 0.5s \\
+        A1 Runner-up: SVM + TF-IDF & Sparse (bigrams) & 0.6360 & 0.7757 (CV) & 5,001 & 0.5s \\
+        \midrule
+        BiLSTM & FastText (300d) & 0.6068 & 0.7476 & 2.7M & 58s \\
+        BERT (Gradual Unfreeze) & Contextual & 0.6294 & 0.8289 & 110M & 145s \\
         \bottomrule
     \end{tabular}
-    \caption{Initial performance comparison---BERT underperforms the baseline.}
+    \caption{Initial performance comparison---BERT underperforms the A1 baselines.}
 \end{table}
 
-\textbf{Problem Identified}: Despite being a more powerful model with 110M parameters and achieving excellent validation F1 ($\sim$0.83), BERT \textbf{failed to beat the simple Logistic Regression baseline} on the official test set (0.6294 vs 0.6395). This counterintuitive result prompted a detailed investigation.
+\textbf{Problem Identified}: Despite being a far more powerful model with 110M parameters and achieving excellent validation F1 ($\sim$0.83), BERT \textbf{failed to beat the simple Logistic Regression baseline} on the official test set (0.6294 vs 0.6395). Even BiLSTM (0.6068) underperformed both A1 baselines. This counterintuitive result prompted a detailed investigation (Section~4).
 
 \subsection{Learning Curves (Experiment 2)}
 We evaluated performance on 25\%, 50\%, 75\%, and 100\% of training data.
@@ -88,6 +99,13 @@ We evaluated performance on 25\%, 50\%, 75\%, and 100\% of training data.
     \item \textbf{BERT} showed superior data efficiency, achieving \textbf{0.6173 F1} with just 25\% of data, whereas LSTM struggled at \textbf{0.5792}.
     \item BERT's performance scales linearly with data, suggesting it would benefit significantly from more labeled examples.
 \end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{results/exp2_learning_curves.png}
+    \caption{Learning curves for different data percentages. BERT shows much better data efficiency than LSTM.}
+    \label{fig:learning}
+\end{figure}
 
 \subsection{Ablation Studies (Experiment 3)}
 \begin{itemize}
@@ -106,6 +124,13 @@ We evaluated performance on 25\%, 50\%, 75\%, and 100\% of training data.
     \item \textbf{New Errors}: However, they also introduced $\sim$100 new errors, often on samples requiring deep reasoning or world knowledge (memes).
     \item \textbf{Confusion Matrix}: Both models show a balanced capability in detecting misogynous content, though false negatives remain the primary challenge.
 \end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{results/exp4_confusion_matrices.png}
+    \caption{Confusion matrices for BiLSTM and BERT on the test set.}
+    \label{fig:confusion}
+\end{figure}
 
 \subsection{Computational Cost (Experiment 5)}
 \begin{itemize}
@@ -141,7 +166,7 @@ To isolate the impact of each factor, we ran a controlled experiment with 5 conf
         \toprule
         \textbf{\#} & \textbf{Configuration} & \textbf{Test F1} & \textbf{Val F1} & \textbf{Time (s)} \\
         \midrule
-        0 & A1 Winner (LR + TF-IDF Bigrams) & 0.6347 & N/A & $<$ 1s \\
+        0 & A1 Winner (LR + TF-IDF Bigrams) & 0.6347 & 0.7811 (CV) & 0.5s \\
         1 & BERT Original (Raw + Gradual + Drop 0.4) & 0.6155 & 0.8210 & 143s \\
         2 & \textbf{BERT + Clean Text (Clean + Gradual + Drop 0.4)} & \textbf{0.6654} & 0.8090 & 141s \\
         3 & BERT + Clean + FullFT (Drop 0.1) & 0.6383 & 0.8200 & 107s \\
@@ -150,6 +175,13 @@ To isolate the impact of each factor, we ran a controlled experiment with 5 conf
     \end{tabular}
     \caption{Experiment 6: Impact of text cleaning and hyperparameter tuning on BERT.}
 \end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{results/exp6_improvements.png}
+    \caption{Visual comparison of BERT performance after improvements. Clean text is the main driver of performance.}
+    \label{fig:improvements}
+\end{figure}
 
 \subsection{Analysis of Improvements}
 
